@@ -1,0 +1,78 @@
+// MVC Architecture
+digraph {
+	rankdir=TB splines=ortho
+	node [fontname=Arial shape=box style="rounded,filled"]
+	subgraph cluster_0 {
+		bgcolor="lightblue:white" color=blue label=Views style=rounded
+		view_0 [label="1. User Dashboard View" fillcolor=lightblue]
+		view_1 [label="2. User Profile View" fillcolor=lightblue]
+		view_2 [label="3. Post Create View" fillcolor=lightblue]
+		view_3 [label="4. Post View" fillcolor=lightblue]
+		view_4 [label="5. Friend Requests View" fillcolor=lightblue]
+	}
+	subgraph cluster_1 {
+		bgcolor="lightgreen:white" color=green label=Controllers style=rounded
+		ctrl_0 [label="1. User Controller" fillcolor=lightgreen]
+		ctrl_1 [label="2. Post Controller" fillcolor=lightgreen]
+		ctrl_2 [label="3. Comment Controller" fillcolor=lightgreen]
+		ctrl_3 [label="4. Friend Request Controller" fillcolor=lightgreen]
+	}
+	subgraph cluster_2 {
+		bgcolor="lightpink:white" color=red label=Models style=rounded
+		model_0 [label="1. User Model" fillcolor=lightpink]
+		model_1 [label="2. Post Model" fillcolor=lightpink]
+		model_2 [label="3. Comment Model" fillcolor=lightpink]
+		model_3 [label="4. Friend Request Model" fillcolor=lightpink]
+	}
+	user [label=User fillcolor=lightyellow shape=circle style=filled]
+	db [label=Database fillcolor=lightgray shape=cylinder style=filled]
+	user -> view_0
+	view_0 -> ctrl_0
+	view_0 -> ctrl_1
+	view_0 -> ctrl_2
+	view_0 -> ctrl_3
+	user -> view_1
+	view_1 -> ctrl_0
+	view_1 -> ctrl_1
+	view_1 -> ctrl_2
+	view_1 -> ctrl_3
+	user -> view_2
+	view_2 -> ctrl_0
+	view_2 -> ctrl_1
+	view_2 -> ctrl_2
+	view_2 -> ctrl_3
+	user -> view_3
+	view_3 -> ctrl_0
+	view_3 -> ctrl_1
+	view_3 -> ctrl_2
+	view_3 -> ctrl_3
+	user -> view_4
+	view_4 -> ctrl_0
+	view_4 -> ctrl_1
+	view_4 -> ctrl_2
+	view_4 -> ctrl_3
+	ctrl_0 -> model_0
+	ctrl_0 -> model_1
+	ctrl_0 -> model_2
+	ctrl_0 -> model_3
+	ctrl_1 -> model_0
+	ctrl_1 -> model_1
+	ctrl_1 -> model_2
+	ctrl_1 -> model_3
+	ctrl_2 -> model_0
+	ctrl_2 -> model_1
+	ctrl_2 -> model_2
+	ctrl_2 -> model_3
+	ctrl_3 -> model_0
+	ctrl_3 -> model_1
+	ctrl_3 -> model_2
+	ctrl_3 -> model_3
+	model_0 -> db
+	model_0 -> view_0 [label=updates]
+	model_1 -> db
+	model_1 -> view_1 [label=updates]
+	model_2 -> db
+	model_2 -> view_2 [label=updates]
+	model_3 -> db
+	model_3 -> view_3 [label=updates]
+}

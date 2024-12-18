@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MVC Generator</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- Add Mermaid.js -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>MVC Architecture Generator</h1>
+        
+        <div class="input-section">
+            <textarea id="promptInput" placeholder="Enter your project requirements (e.g., Create a blog system with user authentication)"></textarea>
+            <button id="generateBtn">Generate MVC Structure</button>
+        </div>
+
+        <!-- Diagram Section -->
+        <div class="diagram-section">
+            <h2>Architecture Diagram</h2>
+            <div class="diagram-container">
+                <pre class="mermaid" id="mvcDiagram">
+                    graph TD
+                    User((User)) --> V[Views]
+                    V --> C[Controllers]
+                    C --> M[Models]
+                    M --> DB[(Database)]
+                    M --> V
+                </pre>
+            </div>
+        </div>
+
+        <div class="output-section">
+            <div class="output-container">
+                <h2>Models</h2>
+                <pre id="modelsOutput"></pre>
+            </div>
+            <div class="output-container">
+                <h2>Views</h2>
+                <pre id="viewsOutput"></pre>
+            </div>
+            <div class="output-container">
+                <h2>Controllers</h2>
+                <pre id="controllersOutput"></pre>
+            </div>
+        </div>
+    </div>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize Mermaid
+            mermaid.initialize({
+                startOnLoad: true,
+                theme: 'default',
+                securityLevel: 'loose',
+                flowchart: {
+                    useMaxWidth: true,
+                    htmlLabels: true,
+                    curve: 'basis'
+                }
+            });
+        
+            const generateBtn = document.getElementById('generateBtn');
+            const promptInput = document.getElementById('promptInput');
+            const modelsOutput = document.getElementById('modelsOutput');
+            const viewsOutput = document.getElementById('viewsOutput');
+            const controllersOutput = document.getElementById('controllersOutput');
+            const mvcDiagram = document.getElementById('mvcDiagram');
+        
+            generateBtn.addEventListener('click', async function() {
+                const prompt = promptInput.value.trim();
+                
+                if (!prompt) {
+                    alert('Please enter a prompt');
+                    return;
+                }
+        
+                try {
+                    generateBtn.disabled = true;
+                    generateBtn.textContent = 'Generating...';
+                    generateBtn.classList.add('loading');
+        
+                    const response = await fetch('/api/generate', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ prompt }),
+                    });
+        
+                    const data = await response.json();
+        
+                    if (response.ok) {
+                        // Update text outputs
+                        modelsOutput.textContent = data.models || 'No models generated';
+                        viewsOutput.textContent = data.views || 'No views generated';
+                        controllersOutput.textContent = data.controllers || 'No controllers generated';
+        
+                        // Generate diagram
+                        updateDiagram(data);
+                    } else {
+                        alert(`Error: ${data.error}`);
+                    }
+                } catch (error) {
+                    alert('Error generating MVC structure');
+                    console.error('Error:', error);
+                } finally {
+                    generateBtn.disabled = false;
+                    generateBtn.textContent = 'Generate MVC Structure';
+                    generateBtn.classList.remove('loading');
+                }
+            });
+        
+            function updateDiagram(data) {
+                const models = parseComponents(data.models);
+                const views = parseComponents(data.views);
+                const controllers = parseComponents(data.controllers);
+        
+                const diagramDefinition = `
+                graph TD
+                    User((User))
+                    DB[(Database)]
+        
+                    subgraph Views
+                        ${views.map((view, i) => `V${i}[${view.name}${view.description ? `: ${view.description}` : ''}]`).join('\n                ')}
+                    end
+        
+                    subgraph Controllers
+                        ${controllers.map((ctrl, i) => `C${i}[${ctrl.name}${ctrl.description ? `: ${ctrl.description}` : ''}]`).join('\n                ')}
+                    end
+        
+                    subgraph Models
+                        ${models.map((model, i) => `M${i}[${model.name}${model.description ? `: ${model.description}` : ''}]`).join('\n                ')}
+                    end
+        
+                    User --> Views
+                    ${views.map((_, i) => `V${i} --> Controllers`).join('\n            ')}
+                    ${controllers.map((_, i) => `C${i} --> Models`).join('\n            ')}
+                    ${models.map((_, i) => `M${i} --> DB`).join('\n            ')}
+                    ${models.map((_, i) => `M${i} --> Views`).join('\n            ')}
+        
+                    classDef default fill:#f9f9f9,stroke:#333,stroke-width:2px;
+                    classDef userNode fill:#e1f5fe,stroke:#0288d1,stroke-width:2px;
+                    classDef dbNode fill:#f1f8e9,stroke:#689f38,stroke-width:2px;
+                    classDef viewNode fill:#fff3e0,stroke:#f57c00,stroke-width:2px;
+                    classDef controllerNode fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px;
+                    classDef modelNode fill:#e8f5e9,stroke:#388e3c,stroke-width:2px;
+                    
+                    class User userNode;
+                    class DB dbNode;
+                    ${views.map((_, i) => `class V${i} viewNode`).join(';\n            ')}; 
+                    ${controllers.map((_, i) => `class C${i} controllerNode`).join(';\n            ')}; 
+                    ${models.map((_, i) => `class M${i} modelNode`).join(';\n            ')}; 
+                `;
+        
+                mvcDiagram.innerHTML = diagramDefinition;
+                mermaid.contentLoaded();
+            }
+        
+            function parseComponents(content) {
+                if (!content) return [];
+                
+                return content
+                    .split('\n')
+                    .filter(line => line.trim().length > 0)
+                    .map(line => line.trim())
+                    .filter(line => !line.startsWith('-') && !line.startsWith('*'))
+                    .map(line => {
+                        const parts = line.split(/[:\(\{]/);
+                        const name = parts[0].trim();
+                        const description = parts.length > 1 ? parts.slice(1).join(':').trim() : '';
+                        return { name, description };
+                    })
+                    .filter(component => component.name.length > 0)
+                    .slice(0, 5);
+            }
+        });
+    </script>
+</body>
+</html>
